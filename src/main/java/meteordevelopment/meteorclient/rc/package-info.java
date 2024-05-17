@@ -34,4 +34,4 @@
  *     This means our philosophy is to keep the Meteor Client as close to the original as possible.
  * </p>
  */
-package meteordevelopment.meteorclient.rd;
+package meteordevelopment.meteorclient.rc;
