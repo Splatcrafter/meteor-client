@@ -30,8 +30,19 @@
  * The GNU General Public License v3.0 requires that the source code of the modified version is visible.
  * </p>
  * <p>
- *     We try to keep the modifications to a minimum and only add features that are not present in the original Meteor Client.
- *     This means our philosophy is to keep the Meteor Client as close to the original as possible.
+ * We try to keep the modifications to a minimum and only add features that are not present in the original Meteor Client.
+ * This means our philosophy is to keep the Meteor Client as close to the original as possible.
+ * </p>
+ * <p>
+ * Also, there is a strict rule that the Redstone Client will never be distributed in a compiled form.
+ * This is to ensure that no one can inject malicious code into the Redstone Client.
+ * If you find a compiled version of the Redstone Client, it is not from us and you should not use it.
+ * The only way to use the Redstone Client is to compile it yourself from the source code.
+ * </p>
+ * <p>
+ * You can find on all Redstone Client classes outside this package the {@link meteordevelopment.meteorclient.rc.client.annotations.RedstoneClient} annotation.
+ * This annotation is used to mark classes that have been created for the Redstone Client.
+ * It is used to make it clear which classes are part of the Redstone Client and which are part of the Meteor Client.
  * </p>
  */
 package meteordevelopment.meteorclient.rc;
