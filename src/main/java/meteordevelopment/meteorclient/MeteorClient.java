@@ -14,6 +14,7 @@ import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.gui.GuiThemes;
 import meteordevelopment.meteorclient.gui.WidgetScreen;
 import meteordevelopment.meteorclient.gui.tabs.Tabs;
+import meteordevelopment.meteorclient.mixin.ClientConnectionInvoker;
 import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.modules.Categories;
@@ -36,11 +37,16 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.network.packet.c2s.play.VehicleMoveC2SPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.invoke.MethodHandles;
+import java.util.LinkedList;
 
 public class MeteorClient implements ClientModInitializer {
     public static final String MOD_ID = "meteor-client";
@@ -56,6 +62,13 @@ public class MeteorClient implements ClientModInitializer {
     public static final IEventBus EVENT_BUS = new EventBus();
     public static final File FOLDER = FabricLoader.getInstance().getGameDir().resolve(MOD_ID).toFile();
     public static final Logger LOG;
+
+    // Redstone Client start
+    public static ClientPlayNetworkHandler networkHandler;
+    public static long globalTimer = 0;
+    public static boolean networkActive = false;
+    public static final LinkedList<Packet<?>> packetQueue = new LinkedList<>();  // Max 5 per tick
+    // Redstone Client end
 
     static {
         MOD_META = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata();
@@ -183,4 +196,27 @@ public class MeteorClient implements ClientModInitializer {
 
         wasWidgetScreen = event.screen instanceof WidgetScreen;
     }
+
+    // Redstone Client start
+    public static void tickEnd(MinecraftClient client) {
+        // Update variables
+        if (client.player != null && !networkActive) {
+            networkActive = true;
+            networkHandler = client.getNetworkHandler();
+        } else if (client.player == null && networkActive) {
+            networkActive = false;
+        }
+        globalTimer++;
+
+        // Send packets from queue (max 5)
+        int movementPacketsLeft = 5;
+        while (!packetQueue.isEmpty() && movementPacketsLeft > 0) {
+            Packet<?> packet = packetQueue.removeFirst();
+            if (packet instanceof PlayerMoveC2SPacket || packet instanceof VehicleMoveC2SPacket) {
+                movementPacketsLeft--;
+            }
+            ((ClientConnectionInvoker) networkHandler.getConnection())._sendImmediately(packet, null, false);
+        }
+    }
+    // Redstone Client end
 }
