@@ -22,11 +22,16 @@
  *         public void foo() {
  *         // ...
  *         }
+ * </pre>
  * </p>
  * <p>
- *     With this example, it is clear where the Redstone Client modifies the Meteor Client.
- *     This is important for transparency and to comply with the GNU General Public License v3.0.
- *     The GNU General Public License v3.0 requires that the source code of the modified version is visible.
+ * With this example, it is clear where the Redstone Client modifies the Meteor Client.
+ * This is important for transparency and to comply with the GNU General Public License v3.0.
+ * The GNU General Public License v3.0 requires that the source code of the modified version is visible.
+ * </p>
+ * <p>
+ *     We try to keep the modifications to a minimum and only add features that are not present in the original Meteor Client.
+ *     This means our philosophy is to keep the Meteor Client as close to the original as possible.
  * </p>
  */
 package meteordevelopment.meteorclient.rd;

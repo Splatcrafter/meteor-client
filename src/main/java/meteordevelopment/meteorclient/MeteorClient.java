@@ -33,6 +33,7 @@ import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
 import meteordevelopment.orbit.IEventBus;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.MinecraftClient;
@@ -151,6 +152,10 @@ public class MeteorClient implements ClientModInitializer {
             Systems.save();
             GuiThemes.save();
         }));
+
+        // Redstone Client start
+        ClientTickEvents.END_CLIENT_TICK.register(MeteorClient::tickEnd);
+        // Redstone Client end
     }
 
     @EventHandler
