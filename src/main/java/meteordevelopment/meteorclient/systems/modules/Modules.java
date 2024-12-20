@@ -16,7 +16,6 @@ import meteordevelopment.meteorclient.events.meteor.KeyEvent;
 import meteordevelopment.meteorclient.events.meteor.ModuleBindChangedEvent;
 import meteordevelopment.meteorclient.events.meteor.MouseButtonEvent;
 import meteordevelopment.meteorclient.pathing.BaritoneUtils;
-import meteordevelopment.meteorclient.rc.client.modules.TeleportDown;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.System;
@@ -90,9 +89,6 @@ public class Modules extends System<Modules> {
         initRender();
         initWorld();
         initMisc();
-        // Redstone Client start
-        initRedstone();
-        // Redstone Client end
     }
 
     @Override
@@ -596,12 +592,6 @@ public class Modules extends System<Modules> {
         add(new SoundBlocker());
         add(new Spam());
     }
-
-    // Redstone Client start
-    private void initRedstone() {
-        add(new TeleportDown());
-    }
-    // Redstone Client end
 
     public static class ModuleRegistry extends SimpleRegistry<Module> {
         public ModuleRegistry() {

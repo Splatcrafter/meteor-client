@@ -65,25 +65,6 @@ dependencies {
     // Baritone (https://github.com/MeteorDevelopment/baritone)
     modCompileOnly "meteordevelopment:baritone:${project.baritone_version}-SNAPSHOT"
 
-    // Redstone Client start
-    def fabricApiModules = [
-        'fabric-api-base': true,
-        'fabric-lifecycle-events-v1': false,
-        'fabric-networking-api-v1': true,
-        'fabric-rendering-v1': false,
-        'fabric-resource-loader-v0': false,
-    ]
-    fabricApiModules.forEach { module, api ->
-        def dependency = fabricApi.module(module, project.fabric_version)
-
-        if (api) {
-            modApi dependency
-        } else {
-            modImplementation dependency
-        }
-    }
-    // Redstone Client end
-
     // Libraries
     library "meteordevelopment:orbit:${project.orbit_version}"
     library "meteordevelopment:starscript:${project.starscript_version}"
@@ -132,18 +113,6 @@ tasks {
             attributes("Main-Class": "meteordevelopment.meteorclient.Main")
         }
     }
-
-    // Redstone Client start
-    tasks.register('copyModMenu', Copy) {
-        from "${buildDir}/libs/meteor-client-0.5.7.jar"
-        into "C:/Users/Splatcrafter/AppData/Roaming/.minecraft/mods"
-        rename { String fileName ->
-            fileName.replace("meteor-client-0.5.7.jar", "meteor-client-0.5.7.jar")
-        }
-    }
-
-    build.finalizedBy(copyModMenu)
-    // Redstone Client end
 
     java {
         sourceCompatibility = JavaVersion.VERSION_21

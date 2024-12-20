@@ -190,8 +190,7 @@
     "WorldChunkMixin",
     "WorldRendererAccessor",
     "WorldRendererMixin",
-    "YggdrasilMinecraftSessionServiceAccessor",
-    "ClientConnectionInvoker"
+    "YggdrasilMinecraftSessionServiceAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -15,7 +15,6 @@ import meteordevelopment.meteorclient.mixininterface.IText;
 import meteordevelopment.meteorclient.utils.network.Http;
 import meteordevelopment.meteorclient.utils.network.MeteorExecutor;
 import meteordevelopment.meteorclient.utils.render.MeteorToast;
-import meteordevelopment.meteorclient.utils.render.color.Color;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.Items;
 import net.minecraft.text.MutableText;
@@ -80,8 +79,7 @@ public class TitleScreenCredits {
     }
 
     private static void add(MeteorAddon addon) {
-        // Redstone Client start
-/*        Credit credit = new Credit(addon);
+        Credit credit = new Credit(addon);
 
         credit.text.append(Text.literal(addon.name).styled(style -> style.withColor(addon.color.getPacked())));
         credit.text.append(Text.literal(" by ").formatted(Formatting.GRAY));
@@ -94,16 +92,7 @@ public class TitleScreenCredits {
             credit.text.append(Text.literal(addon.authors[i]).formatted(Formatting.WHITE));
         }
 
-        credits.add(credit);*/
-
-        Credit credit = new Credit(addon);
-        credit.text.append(Text.literal("Redstone Client").styled(style -> style.withColor(new Color(201, 13, 0).getPacked())));
-        credit.text.append(Text.literal(" by ").formatted(Formatting.GRAY));
-        credit.text.append(Text.literal("Splatcrafter").formatted(Formatting.WHITE));
-        credit.text.append(Text.literal(" & ").formatted(Formatting.GRAY));
-        credit.text.append(Text.literal("Redstone Client Team").formatted(Formatting.WHITE));
         credits.add(credit);
-        // Redstone Client end
     }
 
     public static void render(DrawContext context) {
