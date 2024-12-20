@@ -1,0 +1,536 @@
+Subject: [PATCH] Added RedstoneClient and upgraded to 1.21.4
+---
+Index: src/main/java/meteordevelopment/meteorclient/MeteorClient.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/meteordevelopment/meteorclient/MeteorClient.java b/src/main/java/meteordevelopment/meteorclient/MeteorClient.java
+--- a/src/main/java/meteordevelopment/meteorclient/MeteorClient.java	(revision 591a9e15e34abe2bb730353316e734efb6a5310a)
++++ b/src/main/java/meteordevelopment/meteorclient/MeteorClient.java	(date 1734729170635)
+@@ -36,12 +36,23 @@
+ import net.fabricmc.loader.api.metadata.ModMetadata;
+ import net.minecraft.client.MinecraftClient;
+ import net.minecraft.client.gui.screen.ChatScreen;
++// Redstone Client start
++import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
++import meteordevelopment.meteorclient.mixin.ClientConnectionInvoker;
++import net.minecraft.client.network.ClientPlayNetworkHandler;
++import net.minecraft.network.packet.Packet;
++import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
++import net.minecraft.network.packet.c2s.play.VehicleMoveC2SPacket;
++// Redstone Client end
+ import net.minecraft.util.Identifier;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ 
+ import java.io.File;
+ import java.lang.invoke.MethodHandles;
++// Redstone Client start
++import java.util.LinkedList;
++// Redstone Client end
+ 
+ public class MeteorClient implements ClientModInitializer {
+     public static final String MOD_ID = "meteor-client";
+@@ -58,6 +69,13 @@
+     public static final File FOLDER = FabricLoader.getInstance().getGameDir().resolve(MOD_ID).toFile();
+     public static final Logger LOG;
+ 
++    // Redstone Client start
++    public static ClientPlayNetworkHandler networkHandler;
++    public static long globalTimer = 0;
++    public static boolean networkActive = false;
++    public static final LinkedList<Packet<?>> packetQueue = new LinkedList<>();  // Max 5 per tick
++    // Redstone Client end
++
+     static {
+         MOD_META = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata();
+ 
+@@ -138,6 +156,10 @@
+             Systems.save();
+             GuiThemes.save();
+         }));
++
++        // Redstone Client start
++        ClientTickEvents.END_CLIENT_TICK.register(MeteorClient::tickEnd);
++        // Redstone Client end
+     }
+ 
+     @EventHandler
+@@ -187,4 +209,27 @@
+     public static Identifier identifier(String path) {
+         return Identifier.of(MeteorClient.MOD_ID, path);
+     }
++
++    // Redstone Client start
++    public static void tickEnd(MinecraftClient client) {
++        // Update variables
++        if (client.player != null && !networkActive) {
++            networkActive = true;
++            networkHandler = client.getNetworkHandler();
++        } else if (client.player == null && networkActive) {
++            networkActive = false;
++        }
++        globalTimer++;
++
++        // Send packets from queue (max 5)
++        int movementPacketsLeft = 5;
++        while (!packetQueue.isEmpty() && movementPacketsLeft > 0) {
++            Packet<?> packet = packetQueue.removeFirst();
++            if (packet instanceof PlayerMoveC2SPacket || packet instanceof VehicleMoveC2SPacket) {
++                movementPacketsLeft--;
++            }
++            ((ClientConnectionInvoker) networkHandler.getConnection())._sendImmediately(packet, null, false);
++        }
++    }
++    // Redstone Client end
+ }
+Index: src/main/java/de/splatgames/redstone/client/rc/package-info.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/de/splatgames/redstone/client/rc/package-info.java b/src/main/java/de/splatgames/redstone/client/rc/package-info.java
+new file mode 100644
+--- /dev/null	(date 1734726961052)
++++ b/src/main/java/de/splatgames/redstone/client/rc/package-info.java	(date 1734726961052)
+@@ -0,0 +1,53 @@
++/*
++ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
++ * Copyright (c) Meteor Development.
++ */
++
++/**
++ * This package contains classes from the "Redstone Client".
++ * <p>
++ * The Redstone Client is a Minecraft mod that is a fork of the Meteor Client.
++ * It is a mod that is used for cheating in Minecraft.
++ * </p>
++ * <p>
++ * It has been modified to include additional features and changes that are not present in the original Meteor Client.
++ * This distribution is not affiliated with the Meteor Development team and will never be.
++ * </p>
++ * <p>
++ * Modifications in the original Meteor Client MUST be visible in the source.
++ * Here is an example for comments where the Redstone Client modifies the Meteor Client:
++ * <pre>
++ *         // Redstone Client start
++ *         final boolean example = true;
++ *         // Redstone Client end
++ *         final int a = 1;
++ *         final int b = 2;
++ *         final int c = 3;
++ *
++ *         public void foo() {
++ *         // ...
++ *         }
++ * </pre>
++ * </p>
++ * <p>
++ * With this example, it is clear where the Redstone Client modifies the Meteor Client.
++ * This is important for transparency and to comply with the GNU General Public License v3.0.
++ * The GNU General Public License v3.0 requires that the source code of the modified version is visible.
++ * </p>
++ * <p>
++ * We try to keep the modifications to a minimum and only add features that are not present in the original Meteor Client.
++ * This means our philosophy is to keep the Meteor Client as close to the original as possible.
++ * </p>
++ * <p>
++ * Also, there is a strict rule that the Redstone Client will never be distributed in a compiled form.
++ * This is to ensure that no one can inject malicious code into the Redstone Client.
++ * If you find a compiled version of the Redstone Client, it is not from us and you should not use it.
++ * The only way to use the Redstone Client is to compile it yourself from the source code.
++ * </p>
++ * <p>
++ * You can find on all Redstone Client classes outside this package the {@link de.splatgames.redstone.client.rc.client.annotations.RedstoneClient} annotation.
++ * This annotation is used to mark classes that have been created for the Redstone Client.
++ * It is used to make it clear which classes are part of the Redstone Client and which are part of the Meteor Client.
++ * </p>
++ */
++package de.splatgames.redstone.client.rc;
+Index: src/main/java/meteordevelopment/meteorclient/systems/modules/Categories.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/meteordevelopment/meteorclient/systems/modules/Categories.java b/src/main/java/meteordevelopment/meteorclient/systems/modules/Categories.java
+--- a/src/main/java/meteordevelopment/meteorclient/systems/modules/Categories.java	(revision 591a9e15e34abe2bb730353316e734efb6a5310a)
++++ b/src/main/java/meteordevelopment/meteorclient/systems/modules/Categories.java	(date 1734728991978)
+@@ -16,6 +16,9 @@
+     public static final Category Render = new Category("Render", Items.GLASS.getDefaultStack());
+     public static final Category World = new Category("World", Items.GRASS_BLOCK.getDefaultStack());
+     public static final Category Misc = new Category("Misc", Items.LAVA_BUCKET.getDefaultStack());
++    // Redstone Client start
++    public static final Category Redstone = new Category("Redstone", Items.REDSTONE.getDefaultStack());
++    // Redstone Client end
+ 
+     public static boolean REGISTERING;
+ 
+@@ -29,6 +32,9 @@
+         Modules.registerCategory(Render);
+         Modules.registerCategory(World);
+         Modules.registerCategory(Misc);
++        // Redstone Client start
++        Modules.registerCategory(Redstone);
++        // Redstone Client end
+ 
+         // Addons
+         AddonManager.ADDONS.forEach(MeteorAddon::onRegisterCategories);
+Index: src/main/java/de/splatgames/redstone/client/rc/client/annotations/RedstoneClient.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/de/splatgames/redstone/client/rc/client/annotations/RedstoneClient.java b/src/main/java/de/splatgames/redstone/client/rc/client/annotations/RedstoneClient.java
+new file mode 100644
+--- /dev/null	(date 1734726961041)
++++ b/src/main/java/de/splatgames/redstone/client/rc/client/annotations/RedstoneClient.java	(date 1734726961041)
+@@ -0,0 +1,27 @@
++/*
++ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
++ * Copyright (c) Meteor Development.
++ */
++
++package de.splatgames.redstone.client.rc.client.annotations;
++
++import java.lang.annotation.ElementType;
++import java.lang.annotation.Retention;
++import java.lang.annotation.RetentionPolicy;
++import java.lang.annotation.Target;
++
++/**
++ * Marks a class as a Redstone client class.
++ * <p>
++ * This is used to identify classes that are part of the Redstone client.
++ * It is only used in packages that are not part of the <code>meteordevelopment.meteorclient.rc</code> Package.
++ * The only reason this is used is to make it easier to identify classes that are part of the Redstone client.
++ * </p>
++ *
++ * @author Splatcrafter
++ * @since 1.0.0rc
++ */
++@Retention(RetentionPolicy.RUNTIME)
++@Target(ElementType.TYPE)
++public @interface RedstoneClient {
++}
+Index: src/main/java/meteordevelopment/meteorclient/systems/modules/Modules.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/meteordevelopment/meteorclient/systems/modules/Modules.java b/src/main/java/meteordevelopment/meteorclient/systems/modules/Modules.java
+--- a/src/main/java/meteordevelopment/meteorclient/systems/modules/Modules.java	(revision 591a9e15e34abe2bb730353316e734efb6a5310a)
++++ b/src/main/java/meteordevelopment/meteorclient/systems/modules/Modules.java	(date 1734728991934)
+@@ -6,6 +6,9 @@
+ package meteordevelopment.meteorclient.systems.modules;
+ 
+ import com.mojang.serialization.Lifecycle;
++// Redstone Client start
++import de.splatgames.redstone.client.rc.client.modules.TeleportDown;
++// Redstone Client end
+ import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+ import meteordevelopment.meteorclient.MeteorClient;
+ import meteordevelopment.meteorclient.events.game.GameJoinedEvent;
+@@ -89,6 +92,9 @@
+         initRender();
+         initWorld();
+         initMisc();
++        // Redstone Client start
++        initRedstone();
++        // Redstone Client end
+     }
+ 
+     @Override
+@@ -593,6 +599,12 @@
+         add(new Spam());
+     }
+ 
++    // Redstone Client start
++    private void initRedstone() {
++        add(new TeleportDown());
++    }
++    // Redstone Client end
++
+     public static class ModuleRegistry extends SimpleRegistry<Module> {
+         public ModuleRegistry() {
+             super(RegistryKey.ofRegistry(MeteorClient.identifier("modules")), Lifecycle.stable());
+Index: gradle.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/gradle.properties b/gradle.properties
+--- a/gradle.properties	(revision 591a9e15e34abe2bb730353316e734efb6a5310a)
++++ b/gradle.properties	(date 1734727389834)
+@@ -1,10 +1,10 @@
+ org.gradle.jvmargs=-Xmx2G
+ 
+ # Fabric (https://fabricmc.net/develop)
+-minecraft_version=1.21.3
+-yarn_mappings=1.21.3+build.2
++minecraft_version=1.21.4
++yarn_mappings=1.21.4+build.2
+ loader_version=0.16.9
+-fapi_version=0.108.0+1.21.3
++fapi_version=0.112.2+1.21.4
+ 
+ # Mod Properties
+ mod_version=0.5.9
+@@ -14,16 +14,16 @@
+ # Dependency Versions
+ 
+ # Baritone (https://github.com/MeteorDevelopment/baritone)
+-baritone_version=1.21.3
++baritone_version=1.21.4
+ 
+ # Sodium (https://github.com/CaffeineMC/sodium-fabric)
+-sodium_version=mc1.21.3-0.6.0-fabric
++sodium_version=mc1.21.4-0.6.5-fabric
+ 
+ # Lithium (https://github.com/CaffeineMC/lithium-fabric)
+-lithium_version=mc1.21.3-0.14.2-fabric
++lithium_version=mc1.21.4-0.14.3-fabric
+ 
+ # Iris (https://github.com/IrisShaders/Iris)
+-iris_version=1.8.0+1.21.3-fabric
++iris_version=1.8.4+1.21.4-fabric
+ 
+ # Orbit (https://github.com/MeteorDevelopment/orbit)
+ orbit_version=0.2.4
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build.gradle b/build.gradle
+--- a/build.gradle	(revision 591a9e15e34abe2bb730353316e734efb6a5310a)
++++ b/build.gradle	(date 1734729128475)
+@@ -35,6 +35,7 @@
+         name = "ViaVersion"
+         url = "https://repo.viaversion.com"
+     }
++    mavenLocal()
+     mavenCentral()
+ }
+ 
+@@ -65,6 +66,25 @@
+     // Baritone (https://github.com/MeteorDevelopment/baritone)
+     modCompileOnly "meteordevelopment:baritone:${project.baritone_version}-SNAPSHOT"
+ 
++    // Redstone Client start
++    def fabricApiModules = [
++        'fabric-api-base': true,
++        'fabric-lifecycle-events-v1': false,
++        'fabric-networking-api-v1': true,
++        'fabric-rendering-v1': false,
++        'fabric-resource-loader-v0': false,
++    ]
++    fabricApiModules.forEach { module, api ->
++        def dependency = fabricApi.module(module, project.fapi_version)
++
++        if (api) {
++            modApi dependency
++        } else {
++            modImplementation dependency
++        }
++    }
++    // Redstone Client end
++
+     // Libraries
+     library "meteordevelopment:orbit:${project.orbit_version}"
+     library "meteordevelopment:starscript:${project.starscript_version}"
+Index: src/main/java/meteordevelopment/meteorclient/utils/player/TitleScreenCredits.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/meteordevelopment/meteorclient/utils/player/TitleScreenCredits.java b/src/main/java/meteordevelopment/meteorclient/utils/player/TitleScreenCredits.java
+--- a/src/main/java/meteordevelopment/meteorclient/utils/player/TitleScreenCredits.java	(revision 591a9e15e34abe2bb730353316e734efb6a5310a)
++++ b/src/main/java/meteordevelopment/meteorclient/utils/player/TitleScreenCredits.java	(date 1734729330746)
+@@ -15,6 +15,9 @@
+ import meteordevelopment.meteorclient.utils.network.Http;
+ import meteordevelopment.meteorclient.utils.network.MeteorExecutor;
+ import meteordevelopment.meteorclient.utils.render.MeteorToast;
++// Redstone Client start
++import meteordevelopment.meteorclient.utils.render.color.Color;
++// Redstone Client end
+ import net.minecraft.client.gui.DrawContext;
+ import net.minecraft.item.Items;
+ import net.minecraft.text.MutableText;
+@@ -79,7 +82,8 @@
+     }
+ 
+     private static void add(MeteorAddon addon) {
+-        Credit credit = new Credit(addon);
++        // Redstone Client start
++/*        Credit credit = new Credit(addon);
+ 
+         credit.text.append(Text.literal(addon.name).styled(style -> style.withColor(addon.color.getPacked())));
+         credit.text.append(Text.literal(" by ").formatted(Formatting.GRAY));
+@@ -92,7 +96,16 @@
+             credit.text.append(Text.literal(addon.authors[i]).formatted(Formatting.WHITE));
+         }
+ 
++        credits.add(credit);*/
++
++        Credit credit = new Credit(addon);
++        credit.text.append(Text.literal("Redstone Client").styled(style -> style.withColor(new Color(201, 13, 0).getPacked())));
++        credit.text.append(Text.literal(" by ").formatted(Formatting.GRAY));
++        credit.text.append(Text.literal("Splatcrafter").formatted(Formatting.WHITE));
++        credit.text.append(Text.literal(" & ").formatted(Formatting.GRAY));
++        credit.text.append(Text.literal("Redstone Client Team").formatted(Formatting.WHITE));
+         credits.add(credit);
++        // Redstone Client end
+     }
+ 
+     public static void render(DrawContext context) {
+Index: src/main/java/de/splatgames/redstone/client/rc/client/utils/LoggerUtils.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/de/splatgames/redstone/client/rc/client/utils/LoggerUtils.java b/src/main/java/de/splatgames/redstone/client/rc/client/utils/LoggerUtils.java
+new file mode 100644
+--- /dev/null	(date 1734726961036)
++++ b/src/main/java/de/splatgames/redstone/client/rc/client/utils/LoggerUtils.java	(date 1734726961036)
+@@ -0,0 +1,20 @@
++/*
++ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
++ * Copyright (c) Meteor Development.
++ */
++
++package de.splatgames.redstone.client.rc.client.utils;
++
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
++import org.jetbrains.annotations.NotNull;
++
++public class LoggerUtils {
++
++    private static final String PREFIX = "Redstone Client";
++    public static final Logger LOGGER = LogManager.getLogger(PREFIX);
++
++    public static Logger getLogger(@NotNull final String string) {
++        return LogManager.getLogger(PREFIX + " | " + string);
++    }
++}
+Index: src/main/java/meteordevelopment/meteorclient/mixin/ClientConnectionInvoker.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/meteordevelopment/meteorclient/mixin/ClientConnectionInvoker.java b/src/main/java/meteordevelopment/meteorclient/mixin/ClientConnectionInvoker.java
+new file mode 100644
+--- /dev/null	(date 1734728991927)
++++ b/src/main/java/meteordevelopment/meteorclient/mixin/ClientConnectionInvoker.java	(date 1734728991927)
+@@ -0,0 +1,22 @@
++/*
++ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
++ * Copyright (c) Meteor Development.
++ */
++
++package meteordevelopment.meteorclient.mixin;
++
++import de.splatgames.redstone.client.rc.client.annotations.RedstoneClient;
++import net.minecraft.network.ClientConnection;
++import net.minecraft.network.PacketCallbacks;
++import net.minecraft.network.packet.Packet;
++import org.jetbrains.annotations.Nullable;
++import org.spongepowered.asm.mixin.Mixin;
++import org.spongepowered.asm.mixin.gen.Invoker;
++
++@RedstoneClient
++@Mixin(ClientConnection.class)
++public interface ClientConnectionInvoker {
++    @Invoker("sendImmediately")
++    void _sendImmediately(Packet<?> packet, @Nullable PacketCallbacks callbacks, boolean flush);
++
++}
+Index: src/main/java/de/splatgames/redstone/client/rc/client/modules/TeleportDown.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/de/splatgames/redstone/client/rc/client/modules/TeleportDown.java b/src/main/java/de/splatgames/redstone/client/rc/client/modules/TeleportDown.java
+new file mode 100644
+--- /dev/null	(date 1734728577793)
++++ b/src/main/java/de/splatgames/redstone/client/rc/client/modules/TeleportDown.java	(date 1734728577793)
+@@ -0,0 +1,50 @@
++/*
++ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
++ * Copyright (c) Meteor Development.
++ */
++
++package de.splatgames.redstone.client.rc.client.modules;
++
++import de.splatgames.redstone.client.rc.client.utils.LoggerUtils;
++import de.splatgames.redstone.client.rc.client.utils.PacketHelper;
++import meteordevelopment.meteorclient.settings.IntSetting;
++import meteordevelopment.meteorclient.settings.Setting;
++import meteordevelopment.meteorclient.settings.SettingGroup;
++import meteordevelopment.meteorclient.systems.modules.Categories;
++import meteordevelopment.meteorclient.systems.modules.Module;
++import meteordevelopment.meteorclient.systems.modules.Modules;
++import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
++
++public class TeleportDown extends Module {
++    private final SettingGroup sgGeneral = settings.getDefaultGroup();
++
++    private final Setting<Integer> distance = sgGeneral.add(new IntSetting.Builder()
++        .name("distance")
++        .description("The distance to teleport.")
++        .defaultValue(10)
++        .min(1)
++        .sliderMin(1)
++        .sliderMax(50)
++        .build()
++    );
++
++    public TeleportDown() {
++        super(Categories.Redstone, "Teleport Down", "Teleports you in a straight line down.");
++    }
++
++    @Override
++    public void onActivate() {
++        teleport();
++        Modules.get().get(TeleportDown.class).toggle();
++    }
++
++    private void teleport() {
++        for (int i = 0; i < 4; i++) {
++            PacketHelper.sendPacket(new PlayerMoveC2SPacket.Full(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.getYaw(), mc.player.getPitch(), true, true));
++            LoggerUtils.LOGGER.info("X: " + mc.player.getX() + " Y: " + mc.player.getY() + " Z: " + mc.player.getZ());
++        }
++
++        PacketHelper.sendPacket(new PlayerMoveC2SPacket.Full(mc.player.getX(), mc.player.getY() - distance.get(), mc.player.getZ(), mc.player.getYaw(), mc.player.getPitch(), true, true));
++        LoggerUtils.LOGGER.info("X: " + mc.player.getX() + " Y: " + (mc.player.getY() - distance.get()) + " Z: " + mc.player.getZ());
++    }
++}
+Index: src/main/java/de/splatgames/redstone/client/rc/client/utils/PacketHelper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/de/splatgames/redstone/client/rc/client/utils/PacketHelper.java b/src/main/java/de/splatgames/redstone/client/rc/client/utils/PacketHelper.java
+new file mode 100644
+--- /dev/null	(date 1734726960941)
++++ b/src/main/java/de/splatgames/redstone/client/rc/client/utils/PacketHelper.java	(date 1734726960941)
+@@ -0,0 +1,18 @@
++/*
++ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
++ * Copyright (c) Meteor Development.
++ */
++
++package de.splatgames.redstone.client.rc.client.utils;
++
++import net.minecraft.client.MinecraftClient;
++import net.minecraft.network.packet.Packet;
++
++public class PacketHelper {
++
++    public static void sendPacket(final Packet<?> packet) {
++        if (MinecraftClient.getInstance().player != null) {
++            MinecraftClient.getInstance().player.networkHandler.sendPacket(packet);
++        }
++    }
++}
