@@ -16,6 +16,9 @@ public class Categories {
     public static final Category Render = new Category("Render", Items.GLASS.getDefaultStack());
     public static final Category World = new Category("World", Items.GRASS_BLOCK.getDefaultStack());
     public static final Category Misc = new Category("Misc", Items.LAVA_BUCKET.getDefaultStack());
+    // Redstone Client start
+    public static final Category Redstone = new Category("Redstone", Items.REDSTONE.getDefaultStack());
+    // Redstone Client end
 
     public static boolean REGISTERING;
 
@@ -29,6 +32,9 @@ public class Categories {
         Modules.registerCategory(Render);
         Modules.registerCategory(World);
         Modules.registerCategory(Misc);
+        // Redstone Client start
+        Modules.registerCategory(Redstone);
+        // Redstone Client end
 
         // Addons
         AddonManager.ADDONS.forEach(MeteorAddon::onRegisterCategories);
